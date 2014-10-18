@@ -1,0 +1,11 @@
+#!/bin/sh
+
+MYDIR=/jws.mono/mono
+
+export LD_LIBRARY_PATH=$MYDIR/lib:$LD_LIBRARY_PATH
+export MONO_GAC_PREFIX=$MYDIR
+export MONO_PATH=$MYDIR/lib/mono/4.5
+export MONO_CFG_DIR=$MYDIR/etc
+export MONO_ENV_OPTIONS=--runtime=v4.0.30319
+# exec /jws.mono/mono/bin/mono-sgen  --config /jws.mono/mono/etc/mono/config  --runtime=v4.0.30319 $MONO_OPTIONS "$@"
+exec $MYDIR/bin/mono-sgen "$@"

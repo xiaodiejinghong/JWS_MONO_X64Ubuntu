@@ -1,0 +1,39 @@
+#!/bin/sh
+### BEGIN INIT INFO  
+#  
+# Provides:  Ð¡µû¾ªºè  
+# Required-Start:   $local_fs  $remote_fs  
+# Required-Stop:    $local_fs  $remote_fs  
+# Default-Start:    2 3 4 5  
+# Default-Stop:     0 1 6  
+# Short-Description:    initscript  
+# Description:  
+#  
+### END INIT INFO
+jws_path=/jws.mono/jexus
+case "$1" in
+	start)
+		echo "Start Jexus Web Server..."
+		$jws_path/jws start
+		;;
+	stop)
+		echo "Stop Jexus Web Server..."
+		$jws_path/jws stop
+		;;
+	restart)
+		echo "Restart Jexus Web Server..."
+		$jws_path/jws restart
+		;;
+	status)
+		$jws_path/jws status
+		;;
+	version|-v)
+		$jws_path/jws -v
+		;;
+	*)
+		echo 'oh no!!!'
+		exit 1
+		;;
+esac
+exit 0
+

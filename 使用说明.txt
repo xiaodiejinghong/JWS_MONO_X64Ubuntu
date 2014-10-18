@@ -1,0 +1,53 @@
+本版组成：
+  Mono 3.10.0
+  Jexus 5.6.3
+
+
+使用环境：64位 Ubuntu (制作环境为Ubuntu 12.0.4，理论上可以支持当前及当前以上版本) 
+
+使用方法：提供两种的使用方式
+第一种：
+    （1）、将压缩包解压
+    （2）、将 "jws.mono" 拷贝至根目录（“install”文件旁边的那个）
+    （3）、完成部署
+    （4）、【可选】执行以下两条命令，注册Mono/bin目录为环境变量：
+            a): echo  PATH=/jws.mono/mono/bin/:$PATH>> /etc/profile
+            b): source /etc/profile
+
+此方式更多请见：
+http://www.jhonge.com/Home/Single/28815238
+http://www.jhonge.com/Home/Single/25340037
+
+
+第二种：
+使用方法：
+    （1）、将压缩包解压并切换到相应目录（“install”文件的目录中）
+    （2）、如果是第一次安装“jws.mono”，请执行： ./install -i
+           如果是升级旧版本的“jws.mono”(注意旧版本的jws.mono安装目录应为根目录中)，请执行： ./install -u
+    （3）、待看到“Congratulation!!......All Install has been completed!”表示完成部署。
+
+说明：
+   （1）、本方式为由此版本开始提出的另外一种方式
+   （2）、使用此方式可以实现jws.mono的自动化升级功能（第一种方式需要自己手动迁移数据）
+   （3）、使用本方式部署jws.mono，用户还可以通过以下的方式来快速操作Jexus。
+	a）启动Jexus：service jwsd start
+	b）关闭Jexus：service jwsd stop
+	c）重启Jexus：service jwsd restart
+	d）查看Jexus版本：service jwsd version
+	e）检测Jexus状态：service jwsd status
+	f）设置开机启动：chkconfig jwsd on
+	g）取消开机启动：chkconfig jwsd off
+
+更多信息请参见：
+http://jhonge.net/Home/Single/3660881 
+
+本文档撰写者：小蝶惊鸿
+特别感谢：宇内流云、LexLI、张善友等人
+
+更多关于Linux.NET的知识，请浏览：
+惊鸿哥的港湾：http://www.jhonge.com/
+LinuxDotNET大本营：http://linuxdot.net/
+……
+
+	
+

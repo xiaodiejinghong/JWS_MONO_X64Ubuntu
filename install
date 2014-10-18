@@ -1,0 +1,205 @@
+#!/bin/bash
+pipe=0
+install_path='/jws.mono/'
+need_register_path=1
+path_now=`pwd`
+bakcup_path='/tmp/'
+config(){
+	case "$1" in
+		"-i"|"install"|"-install")
+			pipe=1
+			;;
+		"-u"|"upgrade"|"-upgrade")
+			pipe=2
+			;;
+		--prefix=*)
+			install_path=`expr "le$1" : 'le[^=]*=\(.*\)'`
+			if [ `echo  $install_path | grep -e '.*\/$' | wc -l` -eq 0 ];then
+				install_path=$install_path'/'
+			fi
+			;;
+	esac
+}
+
+chk_mono_exists(){
+	if [ $pipe -eq 2 ];then
+		if [ -L /usr/bin/mono ];then
+			rm -rf /usr/bin/mono
+		fi
+	fi
+	for i in ${PATH//:/ }
+	do
+		if [ ! -d $i ];then
+			continue
+		fi
+		if [ $i == $install_path"mono/bin" ];then
+			need_register_path=0
+			continue
+		fi
+		if [ `find $i | grep mono | wc -l` -gt 0 ];then
+			printf "exists other mono...\n"
+			printf 'Install....Fail\n'
+			exit 1
+		fi
+	done
+}
+
+close_mono(){
+	if [ `ps -ef | grep mono | wc -l` -gt 1 ];then
+		printf 'mono is running...\n'
+		printf 'killing mono.......'
+		pkill mono
+		printf 'Complete\n'
+	fi
+}
+
+chk_dir(){
+	if [ ! -d $install_path ];then
+		mkdir $install_path
+	fi
+	if [ ! -d $install_path'mono' ];then
+		mkdir $install_path'mono'
+	fi
+	if [ ! -d $install_path'mono/bin' ];then
+		mkdir $install_path'mono/bin'
+	fi
+	if [ ! -d $install_path'jexus' ];then
+		mkdir $install_path'jexus'
+	fi
+}
+
+create_mono_script(){
+	if [ -f $install_path'mono/bin/mono' ];then
+		rm -rf $install_path'mono/bin/mono'
+	fi
+	cat  $path_now'/jws.mono/mono/bin/mono' | while read line
+do
+	if [ `echo $line | grep -oP 'MYDIR=.*' | wc -l` -eq 1 ];then
+		#line='MYDIR='${install_path:0:${#install_path}-1}
+		line='MYDIR='$install_path'mono'
+	fi
+	echo $line >> $install_path'mono/bin/mono'
+done
+echo '#make by install script  --jhonge.net' >> $install_path'mono/bin/mono'
+
+echo '#!/bin/sh' > $install_path'mono/bin/dmcs'
+echo 'exec '$install_path'mono/bin/mono $MONO_OPTIONS '$install_path'mono/lib/mono/4.5/mcs.exe -sdk:4 "$@"' >> $install_path'mono/bin/dmcs'
+
+echo '#!/bin/sh' > $install_path'mono/bin/gmcs'
+echo 'exec '$install_path'mono/bin/mono $MONO_OPTIONS '$install_path'mono/lib/mono/4.5/mcs.exe -sdk:2 "$@"' >> $install_path'mono/bin/gmcs'
+
+echo '#!/bin/sh' > $install_path'mono/bin/mcs'
+echo 'exec '$install_path'mono/bin/mono $MONO_OPTIONS '$install_path'mono/lib/mono/4.5/mcs.exe "$@"' >> $install_path'mono/bin/mcs'
+
+chmod a+x $install_path'mono/bin/dmcs'
+chmod a+x $install_path'mono/bin/mcs'
+chmod a+x $install_path'mono/bin/gmcs'
+chmod a+x $install_path'mono/bin/mono'
+}
+
+register_jwsd(){
+	printf '' > /etc/init.d/jwsd
+	cat $path_now'/jws.mono/jexus/jwsd'| while read line
+do
+	if [ `echo $line | grep -oP 'jws_path=.*' | wc -l ` -eq 1 ];then
+		line='jws_path='$install_path'jexus'
+	fi
+	echo $line >> /etc/init.d/jwsd     
+done
+chmod a+x /etc/init.d/jwsd
+update-rc.d jwsd defaults
+service jwsd start
+}
+
+cpy_jws(){
+	cp -R $path_now'/jws.mono/jexus/' $install_path
+	printf '' > $install_path'jexus/jws'
+	cat $path_now'/jws.mono/jexus/jws' | while read line
+do
+	if [ `echo $line | grep -oP 'export\s+LD_LIBRARY_PATH=.*' | wc -l ` -eq 1 ];then
+		line='export LD_LIBRARY_PATH='$install_path'mono/lib:$LD_LIBRARY_PATH'	
+	fi
+	if [ `echo $line | grep -oP 'export\s+PATH=.*' | wc -l` -eq 1 ];then
+		line='export PATH='$install_path'mono/bin:$PATH'
+	fi
+	echo $line >> $install_path'jexus/jws'
+done
+chmod a+x $install_path'jexus/jws'
+}
+
+cpy_lib(){
+	printf 'Installing Frameork Libary......'
+	cp -R $path_now'/jws.mono/mono/etc/'  $install_path'mono/' 
+	cp -R $path_now'/jws.mono/mono/lib/'  $install_path'mono/'
+	cp $path_now'/jws.mono/mono/bin/mono-sgen' $install_path'mono/bin/'
+	printf 'Complete!\n'
+	printf 'Creating Mono Script......'
+	create_mono_script
+	printf 'Complete!\n'
+	printf 'Installing Jexus......'
+	cpy_jws
+	printf 'Complete!\n'
+	printf 'Register Envirment......'
+	if [ $need_register_path -eq 1 ];then
+		echo 'PATH='$install_path'mono/bin:'$PATH >> /etc/profile 
+		if [ ! -f /usr/bin/mono ];then
+			ln -s $install_path'mono/bin/mono' /usr/bin/mono
+		fi
+	fi
+	printf 'Complete!\n'
+	printf 'Register Jexus Web Server Service......'
+	register_jwsd
+	printf 'Complete!\n'
+}
+
+install(){
+	chk_mono_exists
+	close_mono
+	chk_dir
+	cpy_lib
+}
+
+create_backup(){
+	printf 'Creating RestorePoint......'
+	mv $install_path $bakcup_path'jws.mono_bak'
+	printf 'Complete!\n'
+}
+
+migration_data(){
+	printf 'Migrationing Data......'
+	cp -R 	$bakcup_path'jws.mono_bak/jexus/log' $install_path'/jexus/'
+	cp -R 	$bakcup_path'jws.mono_bak/jexus/siteconf' $install_path'/jexus/'
+	rm -rf $bakcup_path'jws.mono_bak'
+	printf 'Complete!\n'
+}
+
+upgrade(){
+	chk_mono_exists
+	create_backup
+	close_mono
+	chk_dir
+	cpy_lib
+	migration_data
+}
+
+if [ 'lele'$1 != 'lele' ];then
+	config $1
+fi
+if [ 'lele'$2 != 'lele' ];then
+	config $2
+fi
+case $pipe in
+	1)
+		install
+		;;
+	2)
+		upgrade
+		;;
+	*)
+		printf 'Exec...Fail~~!!\n'
+		exit 1
+		;;
+esac
+printf 'Congratulation!!......All Install has been completed!\n'
+exit 0
+

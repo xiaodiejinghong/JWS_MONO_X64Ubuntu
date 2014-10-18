@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /jws.mono/mono/bin/mono $MONO_OPTIONS /jws.mono/mono/lib/mono/4.5/mcs.exe -sdk:2 "$@"
