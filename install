@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/sh
 pipe=0
 install_path='/jws.mono/'
 need_register_path=1
@@ -98,17 +98,17 @@ chmod a+x $install_path'mono/bin/mono'
 }
 
 register_jwsd(){
-	printf '' > /etc/init.d/jwsd
+	printf '' > /etc/rc.d/init.d/jwsd
 	cat $path_now'/jws.mono/jexus/jwsd'| while read line
 do
 	if [ `echo $line | grep -oP 'jws_path=.*' | wc -l ` -eq 1 ];then
 		line='jws_path='$install_path'jexus'
 	fi
-	echo $line >> /etc/init.d/jwsd     
+	echo $line >> /etc/rc.d/init.d/jwsd     
 done
-chmod a+x /etc/init.d/jwsd
-update-rc.d jwsd defaults
-service jwsd start
+chmod a+x /etc/rc.d/init.d/jwsd
+chkconfig --add jwsd
+chkconfig jwsd on
 }
 
 cpy_jws(){
@@ -141,7 +141,7 @@ cpy_lib(){
 	printf 'Complete!\n'
 	printf 'Register Envirment......'
 	if [ $need_register_path -eq 1 ];then
-		echo 'PATH='$install_path'mono/bin:'$PATH >> /etc/profile 
+		echo 'PATH='$install_path'mono/bin:'$PATH >> ~/.bash_profile
 		if [ ! -f /usr/bin/mono ];then
 			ln -s $install_path'mono/bin/mono' /usr/bin/mono
 		fi
@@ -170,6 +170,7 @@ migration_data(){
 	cp -R 	$bakcup_path'jws.mono_bak/jexus/log' $install_path'/jexus/'
 	cp -R 	$bakcup_path'jws.mono_bak/jexus/siteconf' $install_path'/jexus/'
 	rm -rf $bakcup_path'jws.mono_bak'
+	rm -rf /usr/local/mono/lib/mono/gac/jx*
 	printf 'Complete!\n'
 }
 
